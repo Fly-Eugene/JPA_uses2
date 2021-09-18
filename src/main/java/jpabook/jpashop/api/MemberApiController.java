@@ -9,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.awt.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 // Controller + ResponseBody를 합친 annotation
 @RestController
@@ -16,6 +19,23 @@ import javax.validation.Valid;
 public class MemberApiController {
 
     private final MemberService memberService;
+
+    // 엔티티에 화면에 뿌려지기 위한 로직이 포함되면 굉장히 복잡해진다.
+    @GetMapping("/api/v1/members")
+    public List<Member> membersV1() {
+        return memberService.findMembers();
+    }
+
+    @GetMapping("/api/v2/members")
+    public Result memberV2() {
+        List<Member> findMembers = memberService.findMembers();
+        List<MemberDto> collect = findMembers.stream()
+                .map(m -> new MemberDto(m.getName()))
+                .collect(Collectors.toList());
+
+        return new Result(collect);
+    }
+
 
     // 1차의 문제, 데이터가 없어도 null 로 들어가버린다.
     // Member 엔티티의 name에 @NotEmpty를 넣으면 null은 못들어간다.
@@ -77,6 +97,20 @@ public class MemberApiController {
     @AllArgsConstructor
     static class UpdateMemberResponse {
         private Long id;
+        private String name;
+    }
+
+    // 바로 json의 배열 타입으로 return 하면, 유연성이 확 떨어지기 때문에
+    // 해당 과정처럼 한 번 더 감싸줘야한다.
+    @Data
+    @AllArgsConstructor
+    private class Result<T> {
+        private T data;
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class MemberDto {
         private String name;
     }
 }
