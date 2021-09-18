@@ -3,11 +3,10 @@ package jpabook.jpashop.api;
 
 import jpabook.jpashop.domain.Member;
 import jpabook.jpashop.service.MemberService;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -42,7 +41,17 @@ public class MemberApiController {
     }
 
 
+    @PutMapping("/api/v2/members/{id}")
+    public UpdateMemberResponse updateMemberV2(
+            @PathVariable("id") Long id,
+            @RequestBody @Valid UpdateMemberRequest request) {
 
+        memberService.update(id, request.getName());
+        // Member 엔티티의 update 메소드에서 Member 를 반환할 수도 있겠지만 (각자의 스타일이 있을 것이다)
+        // Controller 쪽에서 find 메소드로 다시 객체를 찾고 이를 반환해주는 것이 유지보수가 더 좋다.
+        Member findMember = memberService.findOne(id);
+        return new UpdateMemberResponse(findMember.getId(), findMember.getName());
+    }
 
 
     @Data
@@ -59,4 +68,15 @@ public class MemberApiController {
         }
     }
 
+    @Data
+    static class UpdateMemberRequest {
+        private String name;
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class UpdateMemberResponse {
+        private Long id;
+        private String name;
+    }
 }
